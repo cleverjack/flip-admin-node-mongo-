@@ -23,7 +23,7 @@ const audiostorage = multer.diskStorage({
 
   // By default, multer removes file extensions so let's add them back
   filename: function(req, file, cb) {
-      cb(null, 'flip.mp3');
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
   }
 });
 
@@ -40,12 +40,16 @@ const videostorage = multer.diskStorage({
 
 // Getting all pdfs
 router.get('/', PdfController.index);
+router.get('/get-published-pdfs', PdfController.getPublishedPdfs);
 router.post('/upload', multer({ storage: pdfstorage }).single('file'), PdfController.upload);
 router.post('/upload-audio', multer({ storage: audiostorage }).single('file'), PdfController.uploadAudio);
 router.post('/upload-video', multer({ storage: videostorage }).single('file'), PdfController.uploadVideo);
 router.delete('/delete-pdf/:id', PdfController.deletePdf);
 router.delete('/delete-video/:id', PdfController.deleteVideo);
-
+router.delete('/delete-audio/:id', PdfController.deleteAudio);
+router.get('/pdf/:id', PdfController.getPdf);
+router.post('/publish-pdf/:id', PdfController.publishPdf);
+router.get('/pdf-audios/:id', PdfController.getPdfAudios);
 router.get('/get-audio', PdfController.getAudio);
 router.get('/videos', PdfController.getVideos);
 

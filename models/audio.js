@@ -9,6 +9,16 @@ const audioSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  pdfId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Pdf'
+  },
+  pageNum: {
+    type: Number
+  },
+  type: {
+    type: Number // 0: backgruond audio, 1: page audio
+  },
   mimetype: {
     type: String
   },

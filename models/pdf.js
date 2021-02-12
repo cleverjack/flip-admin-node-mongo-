@@ -15,6 +15,20 @@ const pdfSchema = new mongoose.Schema({
   size: {
     type: Number
   },
+  bgAudio: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Audio"
+  },
+  pageAudios: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Audio"
+    }
+  ],
+  published: {
+    type: Boolean,
+    default: false
+  },
   created: {
     type: Date,
     required: true,
