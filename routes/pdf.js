@@ -53,4 +53,6 @@ router.get('/pdf-audios/:id', PdfController.getPdfAudios);
 router.get('/get-audio', PdfController.getAudio);
 router.get('/videos', PdfController.getVideos);
 
+router.get('/testConvertPdf', PdfController.testConvertPdf);
+
 module.exports = router 

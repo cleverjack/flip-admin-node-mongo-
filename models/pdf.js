@@ -9,6 +9,12 @@ const pdfSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  baseName: {
+    type: String
+  },
+  totalPageNum: {
+    type: Number
+  },
   mimetype: {
     type: String
   },
