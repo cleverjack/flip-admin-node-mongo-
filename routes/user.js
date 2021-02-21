@@ -10,5 +10,7 @@ const path = require('path')
 router.post('/login', UserController.login);
 router.post('/register', UserController.register);
 router.post('/reset-password', UserController.resetPassword);
+router.post('/forgot-password', UserController.forgotPassword);
+router.post('/verification', UserController.verification);
 
 module.exports = router 
