@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path')
 const { resolve } = require('path');
 const PDFImage = require("pdf-image").PDFImage;
+const exec = require("child_process").exec;
+const util = require("util");
 
 const pdfController = {
     index: async (req, res) => {
@@ -29,7 +31,52 @@ const pdfController = {
             res.status(400).json({ message: err.message })
         }
     },
+
+    constructGetInfoCommand: function (filePath) {
+        return util.format(
+            "pdfinfo \"%s\"",
+            filePath
+        );
+    },
+    parseGetInfoCommandOutput: function (output) {
+        var info = {};
+        output.split("\n").forEach(function (line) {
+        if (line.match(/^(.*?):[ \t]*(.*)$/)) {
+            info[RegExp.$1] = RegExp.$2;
+        }
+        });
+        return info;
+    },
+    getInfo: function (filePath) {
+        var self = this;
+        var getInfoCommand = pdfController.constructGetInfoCommand(filePath);
+        console.log(getInfoCommand);
+        var promise = new Promise(function (resolve, reject) {
+            exec(getInfoCommand, function (err, stdout, stderr) {
+                if (err) {
+                return reject({
+                    message: "Failed to get PDF'S information",
+                    error: err,
+                    stdout: stdout,
+                    stderr: stderr
+                });
+                }
+                return resolve(pdfController.parseGetInfoCommandOutput(stdout));
+            });
+        });
+        return promise;
+    },
+    numberOfPages: function (filePath) {
+        return pdfController.getInfo(filePath).then(function (info) {
+            return info["Pages"];
+        });
+    },
+    
     upload: async (req, res) => {
+        if (!req.user || req.user.role != 2) {
+            return res.status(403).send('Permission denied');
+        }
+
         try {
             if (req.file) {
                 let pdf = await Pdf.findById(req.body._id);
@@ -54,16 +101,41 @@ const pdfController = {
                 pdf.baseName = path.parse(pdf.url).name;
                 pdf.size = req.file.size;
                 pdf.mimetype = req.file.mimetype;
-
-                var pdfImage = new PDFImage("./uploads/" + pdf.url, { outputDirectory: "./uploads/pages" });
-                let imagePaths = await pdfImage.convertFile();
-                pdf.totalPageNum = imagePaths.length;
-
                 await pdf.save();
 
-                res.status(201).json(pdf);
+                // var pdfImage = new PDFImage("./uploads/" + pdf.url, { outputDirectory: "./uploads/pages" });
+                // let imagePaths = await pdfImage.convertFile();
+                // pdf.totalPageNum = imagePaths.length;
+                let convertCommand = "convert ./uploads/" + pdf.url + " ./uploads/pages/" + pdf.baseName + ".png";
+                let pdfPath = "./uploads/" + pdf.url;
+
+                console.log(convertCommand, pdfPath);
+
+                var getInfoCommand = pdfController.constructGetInfoCommand(pdfPath);
+                console.log(getInfoCommand);
+                exec(getInfoCommand, async function (err, stdout, stderr) {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({message: "convert failed"});
+                    }
+                    let totalPages = pdfController.parseGetInfoCommandOutput(stdout);
+
+                    console.log(totalPages.Pages);
+                    pdf.totalPageNum = totalPages.Pages;
+                    await pdf.save();
+                    exec(convertCommand, function (err, stdout, stderr) {
+                        if (err) {
+                            console.log(err);
+                            return res.status(400).json({message: "convert failed"});
+                        }
+
+                        console.log(stdout);
+                        return res.status(201).json(pdf);
+                    });
+                });
+            } else {
+                res.status(400).json({message: "upload failed"});
             }
-            res.status(400).json({message: "upload failed"});
         } catch (e) {
             return res.status(500).json({ message: e.message })
         }
@@ -84,6 +156,10 @@ const pdfController = {
     },
 
     publishPdf: async (req, res) => {
+        if (!req.user || req.user.role != 2) {
+            return res.status(403).send('Permission denied');
+        }
+        
         try {
             let id = req.params.id;
 
@@ -125,6 +201,10 @@ const pdfController = {
     },
 
     uploadAudio: async (req, res) => {
+        if (!req.user || req.user.role != 2) {
+            return res.status(403).send('Permission denied');
+        }
+        
         try {
             if (req.file && req.body.pdfId) {
                 let condition = {
@@ -189,6 +269,10 @@ const pdfController = {
     },
 
     uploadVideo: async (req, res) => {
+        if (!req.user || req.user.role != 2) {
+            return res.status(403).send('Permission denied');
+        }
+        
         try {
             if (req.file) {
                 let video = new Video();
@@ -209,6 +293,10 @@ const pdfController = {
     },
 
     deletePdf: async (req, res) => {
+        if (!req.user || req.user.role != 2) {
+            return res.status(403).send('Permission denied');
+        }
+        
         try {
             let id = req.params.id;
 
@@ -255,6 +343,10 @@ const pdfController = {
     },
 
     deleteVideo: async (req, res) => {
+        if (!req.user || req.user.role != 2) {
+            return res.status(403).send('Permission denied');
+        }
+        
         try {
             let id = req.params.id;
 
@@ -276,6 +368,10 @@ const pdfController = {
     },
 
     deleteAudio: async (req, res) => {
+        if (!req.user || req.user.role != 2) {
+            return res.status(403).send('Permission denied');
+        }
+        
         try {
             let id = req.params.id;
 
