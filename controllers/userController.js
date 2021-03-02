@@ -1,18 +1,22 @@
-const Pdf = require('../models/pdf')
 const User = require('../models/user')
-const Audio = require('../models/audio')
-const Video = require('../models/video')
-const fs = require('fs');
-const path = require('path')
-const { resolve } = require('path');
-const PDFImage = require("pdf-image").PDFImage;
-const exec = require("child_process").exec;
-const util = require("util");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require("nodemailer");
 
 const accessTokenSecret = 'youraccesstokensecret';
+
+const adminFrontBaseUrl = 'http://localhost:8000/#!/'
+const clientFrontBaseUrl = 'http://localhost:3000/#/';
+
+const transporter = nodemailer.createTransport({
+    host: "smtp.mail.us-east-1.awsapps.com",
+    port: 465,
+    secure: true, // true for 465, false for other ports
+    auth: {
+      user: "admin@dombore.com", // generated ethereal user
+      pass: "SNy7F-.Lp2%t6%:m", // generated ethereal password
+    },
+});
 
 const userController = {
     login: async (req, res) => {
@@ -26,22 +30,13 @@ const userController = {
             }
 
             if (role != 2 && !user.verified) {
-                let transporter = nodemailer.createTransport({
-                    host: "smtp.simply.com",
-                    port: 587,
-                    secure: false, // true for 465, false for other ports
-                    auth: {
-                      user: "test1@tektum.dk", // generated ethereal user
-                      pass: "Rosenberg82", // generated ethereal password
-                    },
-                });
-    
+                
                 const token = jwt.sign({email: user.email}, accessTokenSecret);
     
-                let baseUrl = 'http://localhost:3000/#/';
+                let baseUrl = clientFrontBaseUrl;
     
                 if (role == 2) {
-                    baseUrl = 'http://localhost:8000/#!/'
+                    baseUrl = adminFrontBaseUrl;
                 }
                 // send mail with defined transport object
                 let info = await transporter.sendMail({
@@ -107,22 +102,12 @@ const userController = {
 
             await newUser.save();
 
-            let transporter = nodemailer.createTransport({
-                host: "smtp.simply.com",
-                port: 587,
-                secure: false, // true for 465, false for other ports
-                auth: {
-                  user: "test1@tektum.dk", // generated ethereal user
-                  pass: "Rosenberg82", // generated ethereal password
-                },
-            });
-
             const token = jwt.sign({email: email}, accessTokenSecret);
 
-            let baseUrl = 'http://localhost:3000/#/';
+            let baseUrl = clientFrontBaseUrl;
 
             if (role == 2) {
-                baseUrl = 'http://localhost:8000/#!/'
+                baseUrl = adminFrontBaseUrl
             }
             // send mail with defined transport object
             let info = await transporter.sendMail({
@@ -180,27 +165,19 @@ const userController = {
     forgotPassword: async (req, res) => {
         const { role } = req.body;
         try {
-            let transporter = nodemailer.createTransport({
-                host: "smtp.simply.com",
-                port: 587,
-                secure: false, // true for 465, false for other ports
-                auth: {
-                  user: "test1@tektum.dk", // generated ethereal user
-                  pass: "Rosenberg82", // generated ethereal password
-                },
-            });
+            
 
-            const token = jwt.sign({email: 'lazstar1127@gmail.com'}, accessTokenSecret);
+            const token = jwt.sign({email: 'admin@dombore.com'}, accessTokenSecret);
 
-            let baseUrl = 'http://localhost:3000/#/';
+            let baseUrl = clientFrontBaseUrl;
 
             if (role == 2) {
-                baseUrl = 'http://localhost:8000/#!/'
+                baseUrl = adminFrontBaseUrl
             }
             // send mail with defined transport object
             let info = await transporter.sendMail({
                 from: '"JoiningKwe" <support@dombore.com>', // sender address
-                to: "lazstar1127@gmail.com", // list of receivers
+                to: "admin@dombore.com", // list of receivers
                 subject: "Reset Password", // Subject line
                 // text: "Hello world?", // plain text body
                 html: `<b>To reset password, Please click following <a href='${baseUrl}reset-password?token=${token}'>Link</a></b>`, // html body
